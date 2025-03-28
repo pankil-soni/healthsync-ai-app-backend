@@ -410,8 +410,12 @@ exports.getDoctorPendingDiagnoses = async (doctorId) => {
     try {
         const pendingDiagnoses = await Diagnosis.find({
             $or: [
+                { finalDoctorId: doctorId, status: 'completed' },
                 { finalDoctorId: doctorId, status: 'pending_doctor_review' },
-                { 'suggestedDoctor.doctorId': doctorId, status: 'pending_doctor_review' }
+                { finalDoctorId: doctorId, status: 'pending_reports' },
+                { 'suggestedDoctor.doctorId': doctorId, status: 'completed' },
+                { 'suggestedDoctor.doctorId': doctorId, status: 'pending_doctor_review' },
+                { 'suggestedDoctor.doctorId': doctorId, status: 'pending_reports' },
             ]
         })
             .populate('patientId', 'name gender dateOfBirth')

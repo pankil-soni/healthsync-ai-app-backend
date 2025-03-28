@@ -321,14 +321,29 @@ exports.getDoctorAppointments = async (doctorId, filters = {}) => {
             query.patientId = filters.patientId;
         }
 
+
         const appointments = await Appointment.find(query)
             .populate('patientId', 'name gender dateOfBirth')
             .populate('diagnosisId', 'aiSummary')
             .sort({ date: filters.status === 'completed' ? -1 : 1, 'time.start': 1 });
 
-        console.log(appointments);
-
         return appointments;
+
+
+        // find diagnosis where diagnosis.finalDoctorId is doctorId
+
+        // const diagnosis = await Diagnosis.find({ finalDoctorId: doctorId }).populate('patientId', 'name gender dateOfBirth')
+
+        // const response = {
+        //     "diagnosisId": diagnosis._id,
+        //     "patientId": diagnosis.patientId,
+        //     "aiSummary": diagnosis.aiSummary,
+        // }
+
+
+        // console.log(response);
+
+        // return response;
     } catch (error) {
         console.error('Get doctor appointments error:', error);
         throw new AppError('Failed to get doctor appointments', 500);

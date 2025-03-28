@@ -9,6 +9,7 @@ exports.uploadReport = async (req, res, next) => {
 
         // Check if file was uploaded
         if (!req.file) {
+            console.log("no file")
             return errorResponse(res, 'Report file is required', 400);
         }
 

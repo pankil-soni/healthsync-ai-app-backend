@@ -13,7 +13,7 @@ router.post(
     '/',
     authorize('patient'),
     upload.single('reportFile'),
-    validate(reportValidation.upload),
+    // validate(reportValidation.upload),
     reportController.uploadReport
 );
 

@@ -3,6 +3,7 @@ const diagnosisService = require('../services/diagnosis.service');
 const appointmentService = require('../services/appointment.service');
 const reportService = require('../services/report.service');
 const { successResponse, errorResponse, paginatedResponse } = require('../utils/response.utils');
+const diagnosisModel = require('../models/diagnosis.model');
 
 // Get doctor profile
 exports.getProfile = async (req, res, next) => {
@@ -53,8 +54,17 @@ exports.getPatients = async (req, res, next) => {
         // Get unique patients from appointments
         const appointments = await appointmentService.getDoctorAppointments(doctorId, {});
 
+        // diagnoses
+        const diagnoses = await diagnosisModel.find({ "suggestedDoctor.doctorId": doctorId, "suggestedDoctor.isConfirmed": true });
+
+
+        // Add patients from diagnoses
+        let patientIds = [
+            ...appointments.map(app => app.patientId._id.toString()),
+            ...diagnoses.map(diagnosis => diagnosis.patientId.toString())
+        ];
         // Extract unique patient IDs
-        const patientIds = [...new Set(appointments.map(app => app.patientId._id.toString()))];
+        patientIds = [...new Set(patientIds)];
 
         // Get patient details
         const patients = [];

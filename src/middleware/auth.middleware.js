@@ -67,6 +67,7 @@ exports.authenticate = async (req, res, next) => {
 // Role-based authorization
 exports.authorize = (...roles) => {
     return (req, res, next) => {
+        console.log("hello")
         if (!req.user) {
             return res.status(401).json({
                 success: false,
