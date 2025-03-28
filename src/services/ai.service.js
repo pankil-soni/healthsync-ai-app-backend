@@ -143,18 +143,18 @@ You are a Medical Diagnosis Assistant Chatbot. Your goal is to diagnose patients
 You will be provided with the chat history so based on that you have to keep asking the questions to the patient until the whole diagnosis is completed.
 
 Follow these steps in sequence (asking only one question per response):
-1. First, greet the patient and only ask for their name.
-2. After getting their name, only ask for their age.
-3. Next, only inquire about the main symptom they are experiencing.
-4. Based on the reported symptom, ask specific follow-up questions one at a time.
-5. When appropriate, assess pain intensity (rating pain from 1 to 10).
-6. In a separate question, ask about pain type (e.g., throbbing, sharp) if applicable.
-7. In another response, ask about any medication taken.
-8. If medication was taken, ask about its effects in a separate question.
-9. In a new response, determine the duration of the symptoms.
-10. In another response, ask what they might speculate the cause of the symptoms to be.
-11. Finally, ask for any additional relevant information they would like to share.
-12. When all necessary information is gathered, diagnosis will be completed.
+1. First, greet the patient and only ask for their personal details name, age, gender, occupation and address(city, state).
+2. Next, only inquire about the main symptom they are experiencing.
+3. Based on the reported symptom, ask specific follow-up questions one at a time.
+4. When appropriate, assess pain intensity (rating pain from 1 to 10).
+5. In a separate question, ask about pain type (e.g., throbbing, sharp) if applicable.
+6. In another response, ask about any medication (symptom related or not) and if medication related to symptom, taken what effects did it have was it hepful or not.
+8. In a new response, determine the duration of the symptoms and weather they are progressive increasing or supressive.
+9. In another response, ask what they might speculate the cause of the symptoms to be or they have had the experienced similar conditions before.
+10. Ask If they have undergone any surgeries in the past or have any chronic diseases like blood pressure, diabetes, chloestrol etc.
+11. Then ask about their family history of any chronic diseases and if they had done any blood transfusion recently.
+12. Finally, ask for any additional relevant information they would like to share.
+13. When all necessary information is gathered, diagnosis will be completed.
 
 You must act according to the chat history and ask only the next suitable single question based on the conversation.
 
@@ -216,7 +216,7 @@ strictly make sure you have to only return json in the output nothing except it.
 exports.generateDiagnosisSummary = async (conversationHistory, patientHistory = null) => {
     try {
         // Construct prompt for summary
-        let prompt = 'Based on the following conversation, provide a concise medical summary of the patient\'s condition, likely diagnosis, and recommended next steps.\n\n';
+        let prompt = 'Based on the following conversation, provide a detailed medical summary of the patient\'s condition, likely diagnosis, and recommended next steps.\n\n';
 
         // Add conversation history
         prompt += 'Conversation:\n';
@@ -231,11 +231,9 @@ exports.generateDiagnosisSummary = async (conversationHistory, patientHistory = 
 
         prompt += '\n\nPlease provide a structured summary with sections for: Primary Symptoms, Possible Diagnosis, Recommended Tests, and Suggested Specialist.';
 
-        const messages = [
-            { role: 'user', message: prompt }
-        ];
+        const aiResponse = await this.getAIResponse(prompt, { temperature: 0.3 });
 
-        return await this.generateTextCompletion(messages, { temperature: 0.3 });
+        return aiResponse
     } catch (error) {
         console.error('Diagnosis summary error:', error);
         throw new AppError('Failed to generate diagnosis summary', 500);
@@ -254,7 +252,7 @@ exports.suggestMedicalTests = async (diagnosisSummary, patientHistory = null) =>
             prompt += `\n\nPatient medical history: ${patientHistory}`;
         }
 
-        prompt += '\n\nPlease format your response as a structured list with each test having a name, reason, and priority (High/Medium/Low).';
+        prompt += '\n\nPlease format your response as a structured list with each test having a name, reason, and priority (high/medium/low).';
 
         const messages = [
             { role: 'user', message: prompt }
@@ -270,6 +268,7 @@ exports.suggestMedicalTests = async (diagnosisSummary, patientHistory = null) =>
         let match;
         let currentTest = null;
 
+        console.log(response)
         const lines = response.split('\n');
 
         for (const line of lines) {
@@ -286,7 +285,7 @@ exports.suggestMedicalTests = async (diagnosisSummary, patientHistory = null) =>
                 currentTest = {
                     name: testName,
                     reason: '',
-                    priority: 'Medium' // Default priority
+                    priority: 'medium' // Default priority
                 };
             }
             // Check if line contains test reason

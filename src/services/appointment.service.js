@@ -326,6 +326,8 @@ exports.getDoctorAppointments = async (doctorId, filters = {}) => {
             .populate('diagnosisId', 'aiSummary')
             .sort({ date: filters.status === 'completed' ? -1 : 1, 'time.start': 1 });
 
+        console.log(appointments);
+
         return appointments;
     } catch (error) {
         console.error('Get doctor appointments error:', error);
