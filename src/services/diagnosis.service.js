@@ -38,9 +38,11 @@ exports.startDiagnosis = async (patientId, symptomDescription) => {
         // Add AI response to conversation
         diagnosis.conversationHistory.push({
             role: 'ai',
-            message: aiResponse,
+            message: aiResponse.message,
             timestamp: Date.now()
         });
+
+        diagnosis.status = aiResponse.status;
 
         await diagnosis.save();
 
@@ -93,17 +95,78 @@ exports.addMessage = async (diagnosisId, message, role, attachments = []) => {
                     message: msg.message
                 }));
 
-                aiResponse = await aiService.generateTextCompletion(conversationContext, {
-                    temperature: 0.3
+                let prompt = `
+You are a Medical Diagnosis Assistant Chatbot. Your goal is to diagnose patients by asking relevant and detailed questions about their symptoms, one question at a time.
+                
+You will be provided with the chat history so based on that you have to keep asking the questions to the patient until the whole diagnosis is completed.
+
+the chat history is :
+
+${JSON.stringify(conversationContext)}
+                
+Follow these steps in sequence (asking only one question per response):
+1. First, greet the patient and only ask for their name.
+2. After getting their name, only ask for their age.
+3. Next, only inquire about the main symptom they are experiencing.
+4. Based on the reported symptom, ask specific follow-up questions one at a time.
+5. When appropriate, assess pain intensity (rating pain from 1 to 10).
+6. In a separate question, ask about pain type (e.g., throbbing, sharp) if applicable.
+7. In another response, ask about any medication taken.
+8. If medication was taken, ask about its effects in a separate question.
+9. In a new response, determine the duration of the symptoms.
+10. In another response, ask what they might speculate the cause of the symptoms to be.
+11. Finally, ask for any additional relevant information they would like to share.
+12. When all necessary information is gathered, diagnosis will be completed.
+
+You must act according to the chat history and ask only the next suitable single question based on the conversation.
+
+You have to give response in the json format with two things:
+
+First is the message which is acknowledgement to the last user's answer and your next single question you want to ask to the patient.
+
+Second is the status of chat which should be "ongoing" or "completed".
+When the current question is the last question you think should be asked, then you have to give the status as "completed" otherwise "ongoing".
+
+Strictly make sure to ask only one question at a time.
+
+sample response:
+
+{
+    "message": "Thank you. What is the level of pain you are experiencing on a scale of 1 to 10?",
+    "status": "ongoing"
+}
+
+{
+    "message": "Thank you for sharing all the details. I have noted down your symptoms and will get back to you soon.",
+    "status": "completed"
+}
+
+strictly make sure you have to only return json in the output nothing except it. no any explanation other than json
+`
+
+                aiResponse = await aiService.getAIResponse(prompt, {
+                    temperature: 0
                 });
             }
+
+            let responseText = aiResponse;
+
+            responseText = responseText.replace("```json", '');
+            responseText = responseText.replace("```", '');
+
+            let responseJson = JSON.parse(responseText);
+
+            let message = responseJson.message || '';
+            let status = responseJson.status || 'ongoing';
 
             // Add AI response to conversation
             diagnosis.conversationHistory.push({
                 role: 'ai',
-                message: aiResponse,
+                message: message,
                 timestamp: Date.now()
             });
+
+            diagnosis.status = status;
 
             await diagnosis.save();
         }
